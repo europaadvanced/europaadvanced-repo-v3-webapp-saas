@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { createServerClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/ssr';
 
 function sb() {
   const cookieStore = cookies();
@@ -17,8 +17,8 @@ function sb() {
         },
         remove: (name: string, options: any) => {
           cookieStore.delete({ name, ...options });
-        },
-      },
+        }
+      }
     }
   );
 }
@@ -26,19 +26,18 @@ function sb() {
 const site =
   (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/+$/, '');
 
-/** Magic-link login used by the starter */
+/** Magic-link email login (used by the starter) */
 export async function signInWithEmail(formData: FormData) {
   const email = String(formData.get('email') || '').trim();
   if (!email) return;
   const { error } = await sb().auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: `${site}/auth/callback` },
+    options: { emailRedirectTo: `${site}/auth/callback` }
   });
   if (error) throw new Error(error.message);
-  // UI usually shows a toast; no redirect here.
 }
 
-/** Password login (if your login form uses it) */
+/** Password login (optional) */
 export async function signInWithPassword(formData: FormData) {
   const email = String(formData.get('email') || '').trim();
   const password = String(formData.get('password') || '');
@@ -48,7 +47,7 @@ export async function signInWithPassword(formData: FormData) {
   redirect('/account');
 }
 
-/** Signup with password (used by signup page) */
+/** Password signup */
 export async function signUpWithPassword(formData: FormData) {
   const email = String(formData.get('email') || '').trim();
   const password = String(formData.get('password') || '');
@@ -56,25 +55,25 @@ export async function signUpWithPassword(formData: FormData) {
   const { error } = await sb().auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${site}/auth/callback` },
+    options: { emailRedirectTo: `${site}/auth/callback` }
   });
   if (error) throw new Error(error.message);
   redirect('/account');
 }
 
-/** OAuth button handler (expects form field "provider" = 'google' | 'github' | ...) */
+/** OAuth (expects form field "provider") */
 export async function signInWithOAuth(formData: FormData) {
   const provider = String(formData.get('provider') || '');
   if (!provider) return;
   const { data, error } = await sb().auth.signInWithOAuth({
     provider: provider as any,
-    options: { redirectTo: `${site}/auth/callback` },
+    options: { redirectTo: `${site}/auth/callback` }
   });
   if (error) throw new Error(error.message);
   redirect(data.url);
 }
 
-/** Used by Navigation/AccountMenu */
+/** Sign out used by Navigation / AccountMenu */
 export async function signOut() {
   await sb().auth.signOut();
   redirect('/login');
