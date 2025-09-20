@@ -2,23 +2,35 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 async function sb() {
-  // In server actions cookies() is async in Next 15
-  const getStore = async () => await cookies();
+  // Get the store once (async), then use sync cookie methods below
+  const cookieStore = await cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get: async (name: string) => (await getStore()).get(name)?.value,
-        set: async (name: string, value: string, options: any) =>
-          (await getStore()).set({ name, value, ...options }),
-        remove: async (name: string, options: any) =>
-          (await getStore()).delete({ name, ...options })
-      }
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options?: CookieOptions['set']) {
+          try {
+            cookieStore.set({ name, value, ...(options || {}) });
+          } catch {
+            /* ignore in edge runtimes */
+          }
+        },
+        remove(name: string, options?: CookieOptions['remove']) {
+          try {
+            cookieStore.delete({ name, ...(options || {}) });
+          } catch {
+            /* ignore */
+          }
+        },
+      },
     }
   );
 }
@@ -33,7 +45,7 @@ export async function signInWithEmail(formData: FormData) {
   const supabase = await sb();
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: `${site}/auth/callback` }
+    options: { emailRedirectTo: `${site}/auth/callback` },
   });
   if (error) throw new Error(error.message);
 }
@@ -58,7 +70,7 @@ export async function signUpWithPassword(formData: FormData) {
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${site}/auth/callback` }
+    options: { emailRedirectTo: `${site}/auth/callback` },
   });
   if (error) throw new Error(error.message);
   redirect('/account');
@@ -71,7 +83,7 @@ export async function signInWithOAuth(formData: FormData) {
   const supabase = await sb();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: provider as any,
-    options: { redirectTo: `${site}/auth/callback` }
+    options: { redirectTo: `${site}/auth/callback` },
   });
   if (error) throw new Error(error.message);
   redirect(data.url);
