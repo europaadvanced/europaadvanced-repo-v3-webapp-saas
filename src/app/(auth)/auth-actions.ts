@@ -1,55 +1,39 @@
 'use server';
+import { createClient } from '@supabase/supabase-js';
 
-import { redirect } from 'next/navigation';
-
-import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import { ActionResponse } from '@/types/action-response';
-import { getURL } from '@/utils/get-url';
-
-export async function signInWithOAuth(provider: 'github' | 'google'): Promise<ActionResponse> {
-  const supabase = await createSupabaseServerClient();
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider,
-    options: {
-      redirectTo: getURL('/auth/callback'),
-    },
-  });
-
-  if (error) {
-    console.error(error);
-    return { data: null, error: error };
-  }
-
-  return redirect(data.url);
+function supabaseServer() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false } }
+  );
 }
 
-export async function signInWithEmail(email: string): Promise<ActionResponse> {
-  const supabase = await createSupabaseServerClient();
+export async function signUpWithPassword(formData: FormData) {
+  const email = String(formData.get('email') || '').trim();
+  const password = String(formData.get('password') || '');
+  if (!email || !password) return { ok: false, message: 'Email and password required' };
 
-  const { error } = await supabase.auth.signInWithOtp({
+  const supabase = supabaseServer();
+  const redirectTo =
+    `${process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/,'')}/auth/callback`;
+
+  const { error } = await supabase.auth.signUp({
     email,
-    options: {
-      emailRedirectTo: getURL('/auth/callback'),
-    },
+    password,
+    options: { emailRedirectTo: redirectTo }
   });
 
-  if (error) {
-    console.error(error);
-    return { data: null, error: error };
-  }
-
-  return { data: null, error: null };
+  if (error) return { ok: false, message: error.message };
+  return { ok: true, message: 'Account created. Check email if confirmation is enabled.' };
 }
 
-export async function signOut(): Promise<ActionResponse> {
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.signOut();
+export async function signInWithPassword(formData: FormData) {
+  const email = String(formData.get('email') || '').trim();
+  const password = String(formData.get('password') || '');
 
-  if (error) {
-    console.error(error);
-    return { data: null, error: error };
-  }
-
-  return { data: null, error: null };
+  const supabase = supabaseServer();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
 }
