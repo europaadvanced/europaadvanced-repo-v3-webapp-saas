@@ -2,11 +2,11 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 
 async function sb() {
-  // Get the store once (async), then use sync cookie methods below
-  const cookieStore = await cookies();
+  // Resolve the cookie store once
+  const store = await cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,20 +14,26 @@ async function sb() {
     {
       cookies: {
         get(name: string) {
-          return cookieStore.get(name)?.value;
+          return store.get(name)?.value;
         },
-        set(name: string, value: string, options?: CookieOptions['set']) {
+        // do not over-type options; Next’s type surface varies by version
+        set(name: string, value: string, options?: any) {
           try {
-            cookieStore.set({ name, value, ...(options || {}) });
+            // both signatures are accepted across versions
+            (store as any).set(name, value, options);
           } catch {
-            /* ignore in edge runtimes */
+            try {
+              (store as any).set({ name, value, ...(options || {}) });
+            } catch {}
           }
         },
-        remove(name: string, options?: CookieOptions['remove']) {
+        remove(name: string, options?: any) {
           try {
-            cookieStore.delete({ name, ...(options || {}) });
+            (store as any).delete(name, options);
           } catch {
-            /* ignore */
+            try {
+              (store as any).delete({ name, ...(options || {}) });
+            } catch {}
           }
         },
       },
