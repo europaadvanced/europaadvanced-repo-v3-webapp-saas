@@ -1,36 +1,81 @@
 'use server';
 
-import { createClient } from '@supabase/supabase-js';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { createServerClient } from '@supabase/auth-helpers-nextjs';
 
 function sb() {
-  return createClient(
+  const cookieStore = cookies();
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false } }
+    {
+      cookies: {
+        get: (name: string) => cookieStore.get(name)?.value,
+        set: (name: string, value: string, options: any) => {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove: (name: string, options: any) => {
+          cookieStore.delete({ name, ...options });
+        },
+      },
+    }
   );
 }
 
-export async function signUpWithPassword(formData: FormData) {
-  const email = String(formData.get('email') || '').trim();
-  const password = String(formData.get('password') || '');
-  if (!email || !password) return;
+const site =
+  (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/+$/, '');
 
-  const { error } = await sb().auth.signUp({
+/** Magic-link login used by the starter */
+export async function signInWithEmail(formData: FormData) {
+  const email = String(formData.get('email') || '').trim();
+  if (!email) return;
+  const { error } = await sb().auth.signInWithOtp({
     email,
-    password,
-    options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` }
+    options: { emailRedirectTo: `${site}/auth/callback` },
   });
   if (error) throw new Error(error.message);
-  redirect('/account'); // go to the app after signup
+  // UI usually shows a toast; no redirect here.
 }
 
+/** Password login (if your login form uses it) */
 export async function signInWithPassword(formData: FormData) {
   const email = String(formData.get('email') || '').trim();
   const password = String(formData.get('password') || '');
   if (!email || !password) return;
-
   const { error } = await sb().auth.signInWithPassword({ email, password });
   if (error) throw new Error(error.message);
-  redirect('/account'); // go to the app after login
+  redirect('/account');
+}
+
+/** Signup with password (used by signup page) */
+export async function signUpWithPassword(formData: FormData) {
+  const email = String(formData.get('email') || '').trim();
+  const password = String(formData.get('password') || '');
+  if (!email || !password) return;
+  const { error } = await sb().auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: `${site}/auth/callback` },
+  });
+  if (error) throw new Error(error.message);
+  redirect('/account');
+}
+
+/** OAuth button handler (expects form field "provider" = 'google' | 'github' | ...) */
+export async function signInWithOAuth(formData: FormData) {
+  const provider = String(formData.get('provider') || '');
+  if (!provider) return;
+  const { data, error } = await sb().auth.signInWithOAuth({
+    provider: provider as any,
+    options: { redirectTo: `${site}/auth/callback` },
+  });
+  if (error) throw new Error(error.message);
+  redirect(data.url);
+}
+
+/** Used by Navigation/AccountMenu */
+export async function signOut() {
+  await sb().auth.signOut();
+  redirect('/login');
 }
