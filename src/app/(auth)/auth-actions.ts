@@ -1,7 +1,9 @@
 'use server';
-import { createClient } from '@supabase/supabase-js';
 
-function supabase() {
+import { createClient } from '@supabase/supabase-js';
+import { redirect } from 'next/navigation';
+
+function sb() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -12,21 +14,23 @@ function supabase() {
 export async function signUpWithPassword(formData: FormData) {
   const email = String(formData.get('email') || '').trim();
   const password = String(formData.get('password') || '');
-  if (!email || !password) return { ok: false, message: 'Email and password required' };
+  if (!email || !password) return;
 
-  const { error } = await supabase().auth.signUp({
-    email, password,
-    // set this later when you re-enable email confirmation
+  const { error } = await sb().auth.signUp({
+    email,
+    password,
     options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` }
   });
-  if (error) return { ok: false, message: error.message };
-  return { ok: true, message: 'Account created.' };
+  if (error) throw new Error(error.message);
+  redirect('/account'); // go to the app after signup
 }
 
 export async function signInWithPassword(formData: FormData) {
   const email = String(formData.get('email') || '').trim();
   const password = String(formData.get('password') || '');
-  const { error } = await supabase().auth.signInWithPassword({ email, password });
-  if (error) return { ok: false, message: error.message };
-  return { ok: true };
+  if (!email || !password) return;
+
+  const { error } = await sb().auth.signInWithPassword({ email, password });
+  if (error) throw new Error(error.message);
+  redirect('/account'); // go to the app after login
 }
