@@ -75,17 +75,21 @@ export async function signInWithPassword(formData: FormData): Promise<ActionResp
 export async function signUpWithPassword(formData: FormData): Promise<ActionResponse> {
   const email = String(formData.get('email') || '').trim();
   const password = String(formData.get('password') || '');
-  if (!email || !password) return undefined;
+   const phone = String(formData.get('phone') || '').trim();
+  if (!email || !password || !phone) return undefined;
   const supabase = await sb();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${site}/auth/callback` },
+     options: { emailRedirectTo: `${site}/auth/callback`, data: { phone } },
   });
   if (error) {
     return { data, error };
   }
-  redirect('/account');
+  if (data?.session) {
+    redirect('/account');
+  }
+  return { data, error: null };
 }
 
 /** OAuth (expects form field `provider`) */
