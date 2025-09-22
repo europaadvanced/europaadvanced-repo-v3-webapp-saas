@@ -19,34 +19,91 @@ const titleMap = {
 export function AuthUI({
   mode,
   signInWithOAuth,
-  signInWithEmail,
+ signInWithPassword,
+  signUpWithPassword,
 }: {
   mode: 'login' | 'signup';
   signInWithOAuth: (formData: FormData) => Promise<ActionResponse>;
-  signInWithEmail: (formData: FormData) => Promise<ActionResponse>;
+signInWithPassword: (formData: FormData) => Promise<ActionResponse>;
+  signUpWithPassword: (formData: FormData) => Promise<ActionResponse>;
 }) {
   const [pending, setPending] = useState(false);
   const [emailFormOpen, setEmailFormOpen] = useState(false);
-
-  async function handleEmailSubmit(event: FormEvent<HTMLFormElement>) {
+ const isSignup = mode === 'signup';
+ 
+  async function handleCredentialsSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
-    const form = event.target as HTMLFormElement;
+    const form = event.currentTarget;
     const formData = new FormData(form);
     const email = String(formData.get('email') ?? '').trim();
+    const password = String(formData.get('password') ?? '');
 
+    if (!email || !password) {
+      toast({
+        variant: 'destructive',
+        description: 'Please provide both email and password.',
+      });
+      setPending(false);
+      return;
+    }
+    
     try {
-      const response = await signInWithEmail(formData);
+     if (isSignup) {
+        const confirmPassword = String(formData.get('confirmPassword') ?? '');
+        const phone = String(formData.get('phone') ?? '').trim();
+        const acceptedTerms = formData.get('acceptTerms') === 'on';
 
-      if (response?.error) {
-        toast({
-          variant: 'destructive',
-          description: 'An error occurred while authenticating. Please try again.',
-        });
+             if (!phone) {
+          toast({
+            variant: 'destructive',
+            description: 'Please provide a phone number to continue.',
+          });
+          setPending(false);
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          toast({
+            variant: 'destructive',
+            description: 'Passwords do not match.',
+          });
+          setPending(false);
+          return;
+        }
+
+        if (!acceptedTerms) {
+          toast({
+            variant: 'destructive',
+            description: 'You must accept the Terms of Service and Privacy Policy.',
+          });
+          setPending(false);
+          return;
+        }
+
+        const response = await signUpWithPassword(formData);
+
+        if (response?.error) {
+          toast({
+            variant: 'destructive',
+            description: response.error?.message ?? 'Unable to create your account.',
+          });
+        } else if (response?.data?.user && !response?.data?.session) {
+          toast({
+            description: `Account created! Please confirm the email sent to ${email} before logging in.`,
+          });
+          form.reset();
+          setEmailFormOpen(false);
+        }
       } else {
-        toast({
-          description: `To continue, click the link in the email sent to: ${email}`,
-        });
+              const response = await signInWithPassword(formData);
+
+        if (response?.error) {
+          toast({
+            variant: 'destructive',
+            description: response.error?.message ?? 'Invalid login credentials.',
+          });
+        }
       }
     } catch (error) {
       console.error(error);
@@ -55,7 +112,6 @@ export function AuthUI({
         description: 'An unexpected error occurred. Please try again.',
       });
     } finally {
-      form.reset();
       setPending(false);
     }
   }
@@ -115,25 +171,83 @@ export function AuthUI({
               className='text-neutral6 flex w-full items-center justify-center gap-2 rounded-md bg-zinc-900 py-4 font-medium transition-all hover:bg-zinc-800 disabled:bg-neutral-700 disabled:text-black'
               disabled={pending}
             >
-              Continue with Email
+                         {isSignup ? 'Sign up with Email' : 'Continue with Email'}
             </button>
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className='mt-[-2px] w-full rounded-b-md bg-zinc-900 p-8'>
-              <form onSubmit={handleEmailSubmit}>
+                            <form className='flex flex-col gap-4' onSubmit={handleCredentialsSubmit}>
                 <Input
                   type='email'
                   name='email'
                   placeholder='Enter your email'
                   aria-label='Enter your email'
+                                   autoComplete='email'
                   autoFocus
+                                 required
+                  disabled={pending}
                 />
-                <div className='mt-4 flex justify-end gap-2'>
-                  <Button type='button' onClick={() => setEmailFormOpen(false)}>
+                {isSignup && (
+                  <Input
+                    type='tel'
+                    name='phone'
+                    placeholder='Enter your phone number'
+                    aria-label='Enter your phone number'
+                    autoComplete='tel'
+                    required
+                    disabled={pending}
+                  />
+                )}
+                <Input
+                  type='password'
+                  name='password'
+                  placeholder={isSignup ? 'Create a password' : 'Enter your password'}
+                  aria-label={isSignup ? 'Create a password' : 'Enter your password'}
+                  autoComplete={isSignup ? 'new-password' : 'current-password'}
+                  minLength={8}
+                  required
+                  disabled={pending}
+                  />
+                 {isSignup && (
+                  <Input
+                    type='password'
+                    name='confirmPassword'
+                    placeholder='Confirm your password'
+                    aria-label='Confirm your password'
+                    autoComplete='new-password'
+                    minLength={8}
+                    required
+                    disabled={pending}
+                  />
+                )}
+                {isSignup && (
+                  <label className='flex items-start gap-2 text-left text-sm text-neutral5'>
+                    <input
+                      type='checkbox'
+                      name='acceptTerms'
+                      className='mt-1 h-4 w-4 shrink-0 rounded border border-zinc-700 bg-black accent-cyan-500'
+                      required
+                      disabled={pending}
+                    />
+                    <span>
+                      I agree to the{' '}
+                      <Link href='/terms' className='underline'>
+                        Terms of Service
+                      </Link>{' '}
+                      and{' '}
+                      <Link href='/privacy' className='underline'>
+                        Privacy Policy
+                      </Link>
+                      .
+                    </span>
+                  </label>
+                )}
+                <div className='flex justify-end gap-2'>
+                  <Button type='button' onClick={() => setEmailFormOpen(false)} disabled={pending}>
                     Cancel
                   </Button>
-                  <Button variant='secondary' type='submit'>
-                    Submit
+                  <Button variant='secondary' type='submit' disabled={pending}>
+                    {isSignup ? 'Create account' : 'Log in'}
                   </Button>
                 </div>
               </form>
@@ -141,9 +255,9 @@ export function AuthUI({
           </CollapsibleContent>
         </Collapsible>
       </div>
-      {mode === 'signup' && (
+      {mode === 'login' && (
         <span className='text-neutral5 m-auto max-w-sm text-sm'>
-          By clicking continue, you agree to our{' '}
+          By continuing you agree to our{' '}
           <Link href='/terms' className='underline'>
             Terms of Service
           </Link>{' '}
