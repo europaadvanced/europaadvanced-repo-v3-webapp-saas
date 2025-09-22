@@ -22,8 +22,8 @@ export function AuthUI({
   signInWithEmail,
 }: {
   mode: 'login' | 'signup';
-  signInWithOAuth: (provider: 'github' | 'google') => Promise<ActionResponse>;
-  signInWithEmail: (email: string) => Promise<ActionResponse>;
+  signInWithOAuth: (formData: FormData) => Promise<ActionResponse>;
+  signInWithEmail: (formData: FormData) => Promise<ActionResponse>;
 }) {
   const [pending, setPending] = useState(false);
   const [emailFormOpen, setEmailFormOpen] = useState(false);
@@ -32,32 +32,54 @@ export function AuthUI({
     event.preventDefault();
     setPending(true);
     const form = event.target as HTMLFormElement;
-    const email = form['email'].value;
-    const response = await signInWithEmail(email);
+    const formData = new FormData(form);
+    const email = String(formData.get('email') ?? '').trim();
 
-    if (response?.error) {
+    try {
+      const response = await signInWithEmail(formData);
+
+      if (response?.error) {
+        toast({
+          variant: 'destructive',
+          description: 'An error occurred while authenticating. Please try again.',
+        });
+      } else {
+        toast({
+          description: `To continue, click the link in the email sent to: ${email}`,
+        });
+      }
+    } catch (error) {
+      console.error(error);
       toast({
         variant: 'destructive',
-        description: 'An error occurred while authenticating. Please try again.',
+        description: 'An unexpected error occurred. Please try again.',
       });
-    } else {
-      toast({
-        description: `To continue, click the link in the email sent to: ${email}`,
-      });
+    } finally {
+      form.reset();
+      setPending(false);
     }
-
-    form.reset();
-    setPending(false);
   }
 
   async function handleOAuthClick(provider: 'google' | 'github') {
     setPending(true);
-    const response = await signInWithOAuth(provider);
+    const formData = new FormData();
+    formData.append('provider', provider);
 
-    if (response?.error) {
+    try {
+      const response = await signInWithOAuth(formData);
+
+      if (response?.error) {
+        toast({
+          variant: 'destructive',
+          description: 'An error occurred while authenticating. Please try again.',
+        });
+        setPending(false);
+      }
+    } catch (error) {
+      console.error(error);
       toast({
         variant: 'destructive',
-        description: 'An error occurred while authenticating. Please try again.',
+        description: 'An unexpected error occurred. Please try again.',
       });
       setPending(false);
     }
