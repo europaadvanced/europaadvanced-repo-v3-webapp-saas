@@ -26,7 +26,7 @@ export async function Navigation() {
 
           <AccountMenu signOut={signOut} />
 
-          {/* mobile menu when signed in */}
+           {/* mobile menu when signed in */}
           <Sheet>
             <SheetTrigger className="block lg:hidden">
               <IoMenu size={28} />
@@ -51,8 +51,8 @@ export async function Navigation() {
           {/* desktop links when signed out */}
           <nav className="hidden lg:flex items-center gap-4">
             <Link href="/pricing">Pricing</Link>
-            <Link href="/auth/login">Login</Link>
-            <Link href="/auth/register">Register</Link>
+            <Link href="/login">Login</Link>
+            <Link href="/signup">Register</Link>
           </nav>
 
           <Button variant="sexy" className="hidden flex-shrink-0 lg:flex" asChild>
@@ -70,8 +70,8 @@ export async function Navigation() {
                 <SheetDescription className="py-8">
                   <div className="grid gap-4 text-lg">
                     <Link href="/pricing">Pricing</Link>
-                    <Link href="/auth/login">Login</Link>
-                    <Link href="/auth/register">Register</Link>
+                    <Link href="/login">Login</Link>
+                    <Link href="/signup">Register</Link>
                   </div>
                 </SheetDescription>
               </SheetHeader>
