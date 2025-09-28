@@ -3,7 +3,7 @@
 import { FormEvent, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { IoLogoGithub, IoLogoGoogle } from 'react-icons/io5';
+import { IoLogoGoogle } from 'react-icons/io5';
 
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -16,24 +16,22 @@ const titleMap = {
   signup: 'Join UPDATE_THIS_WITH_YOUR_APP_DISPLAY_NAME and start generating banners for free',
 } as const;
 
-export function AuthUI({
-  mode,
-  signInWithOAuth,
- signInWithPassword,
-  signUpWithPassword,
-}: {
+type AuthUIProps = {
   mode: 'login' | 'signup';
   signInWithOAuth: (formData: FormData) => Promise<ActionResponse>;
-signInWithPassword: (formData: FormData) => Promise<ActionResponse>;
+  signInWithPassword: (formData: FormData) => Promise<ActionResponse>;
   signUpWithPassword: (formData: FormData) => Promise<ActionResponse>;
-}) {
+};
+
+export function AuthUI({ mode, signInWithOAuth, signInWithPassword, signUpWithPassword }: AuthUIProps) {
   const [pending, setPending] = useState(false);
   const [emailFormOpen, setEmailFormOpen] = useState(false);
- const isSignup = mode === 'signup';
- 
+  const isSignup = mode === 'signup';
+
   async function handleCredentialsSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
+
     const form = event.currentTarget;
     const formData = new FormData(form);
     const email = String(formData.get('email') ?? '').trim();
@@ -47,14 +45,14 @@ signInWithPassword: (formData: FormData) => Promise<ActionResponse>;
       setPending(false);
       return;
     }
-    
+
     try {
-     if (isSignup) {
+      if (isSignup) {
         const confirmPassword = String(formData.get('confirmPassword') ?? '');
         const phone = String(formData.get('phone') ?? '').trim();
         const acceptedTerms = formData.get('acceptTerms') === 'on';
 
-             if (!phone) {
+        if (!phone) {
           toast({
             variant: 'destructive',
             description: 'Please provide a phone number to continue.',
@@ -96,7 +94,7 @@ signInWithPassword: (formData: FormData) => Promise<ActionResponse>;
           setEmailFormOpen(false);
         }
       } else {
-              const response = await signInWithPassword(formData);
+        const response = await signInWithPassword(formData);
 
         if (response?.error) {
           toast({
@@ -116,10 +114,10 @@ signInWithPassword: (formData: FormData) => Promise<ActionResponse>;
     }
   }
 
-  async function handleOAuthClick(provider: 'google' | 'github') {
+  async function handleGmailClick() {
     setPending(true);
     const formData = new FormData();
-    formData.append('provider', provider);
+    formData.append('provider', 'google');
 
     try {
       const response = await signInWithOAuth(formData);
@@ -150,44 +148,36 @@ signInWithPassword: (formData: FormData) => Promise<ActionResponse>;
       <div className='flex flex-col gap-4'>
         <button
           className='flex items-center justify-center gap-2 rounded-md bg-cyan-500 py-4 font-medium text-black transition-all hover:bg-cyan-400 disabled:bg-neutral-700'
-          onClick={() => handleOAuthClick('google')}
+          onClick={handleGmailClick}
           disabled={pending}
         >
           <IoLogoGoogle size={20} />
-          Continue with Google
-        </button>
-        <button
-          className='flex items-center justify-center gap-2 rounded-md bg-fuchsia-500 py-4 font-medium text-black transition-all hover:bg-fuchsia-400 disabled:bg-neutral-700'
-          onClick={() => handleOAuthClick('github')}
-          disabled={pending}
-        >
-          <IoLogoGithub size={20} />
-          Continue with GitHub
+          Continue with Gmail
         </button>
 
         <Collapsible open={emailFormOpen} onOpenChange={setEmailFormOpen}>
           <CollapsibleTrigger asChild>
             <button
-              className='text-neutral6 flex w-full items-center justify-center gap-2 rounded-md bg-zinc-900 py-4 font-medium transition-all hover:bg-zinc-800 disabled:bg-neutral-700 disabled:text-black'
+              className='flex w-full items-center justify-center gap-2 rounded-md bg-zinc-900 py-4 font-medium text-neutral-400 transition-all hover:bg-zinc-800 disabled:bg-neutral-700 disabled:text-black'
               disabled={pending}
             >
-                         {isSignup ? 'Sign up with Email' : 'Continue with Email'}
+              {isSignup ? 'Sign up with Email' : 'Continue with Email'}
             </button>
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className='mt-[-2px] w-full rounded-b-md bg-zinc-900 p-8'>
-                            <form className='flex flex-col gap-4' onSubmit={handleCredentialsSubmit}>
+              <form className='flex flex-col gap-4' onSubmit={handleCredentialsSubmit}>
                 <Input
                   type='email'
                   name='email'
                   placeholder='Enter your email'
                   aria-label='Enter your email'
-                                   autoComplete='email'
+                  autoComplete='email'
                   autoFocus
-                                 required
+                  required
                   disabled={pending}
                 />
-                {isSignup && (
+                {isSignup ? (
                   <Input
                     type='tel'
                     name='phone'
@@ -197,7 +187,7 @@ signInWithPassword: (formData: FormData) => Promise<ActionResponse>;
                     required
                     disabled={pending}
                   />
-                )}
+                ) : null}
                 <Input
                   type='password'
                   name='password'
@@ -207,8 +197,8 @@ signInWithPassword: (formData: FormData) => Promise<ActionResponse>;
                   minLength={8}
                   required
                   disabled={pending}
-                  />
-                 {isSignup && (
+                />
+                {isSignup ? (
                   <Input
                     type='password'
                     name='confirmPassword'
@@ -219,9 +209,9 @@ signInWithPassword: (formData: FormData) => Promise<ActionResponse>;
                     required
                     disabled={pending}
                   />
-                )}
-                {isSignup && (
-                  <label className='flex items-start gap-2 text-left text-sm text-neutral5'>
+                ) : null}
+                {isSignup ? (
+                  <label className='flex items-start gap-2 text-left text-sm text-neutral-500'>
                     <input
                       type='checkbox'
                       name='acceptTerms'
@@ -241,7 +231,7 @@ signInWithPassword: (formData: FormData) => Promise<ActionResponse>;
                       .
                     </span>
                   </label>
-                )}
+                ) : null}
                 <div className='flex justify-end gap-2'>
                   <Button type='button' onClick={() => setEmailFormOpen(false)} disabled={pending}>
                     Cancel
@@ -255,8 +245,8 @@ signInWithPassword: (formData: FormData) => Promise<ActionResponse>;
           </CollapsibleContent>
         </Collapsible>
       </div>
-      {mode === 'login' && (
-        <span className='text-neutral5 m-auto max-w-sm text-sm'>
+      {mode === 'login' ? (
+        <span className='m-auto max-w-sm text-sm text-neutral-500'>
           By continuing you agree to our{' '}
           <Link href='/terms' className='underline'>
             Terms of Service
@@ -267,7 +257,7 @@ signInWithPassword: (formData: FormData) => Promise<ActionResponse>;
           </Link>
           .
         </span>
-      )}
+      ) : null}
     </section>
   );
 }
