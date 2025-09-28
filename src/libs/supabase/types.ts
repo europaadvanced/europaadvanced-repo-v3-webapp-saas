@@ -178,6 +178,7 @@ export interface Database {
           billing_address: Json | null;
           full_name: string | null;
           id: string;
+          phone: string | null;
           payment_method: Json | null;
         };
         Insert: {
@@ -185,6 +186,7 @@ export interface Database {
           billing_address?: Json | null;
           full_name?: string | null;
           id: string;
+          phone?: string | null;
           payment_method?: Json | null;
         };
         Update: {
@@ -192,6 +194,7 @@ export interface Database {
           billing_address?: Json | null;
           full_name?: string | null;
           id?: string;
+          phone?: string | null;
           payment_method?: Json | null;
         };
         Relationships: [
@@ -203,6 +206,24 @@ export interface Database {
             referencedColumns: ['id'];
           }
         ];
+      };
+      tenders: {
+        Row: {
+          id: number;
+          link: string | null;
+          title_ai: string | null;
+        };
+        Insert: {
+          id?: number;
+          link?: string | null;
+          title_ai?: string | null;
+        };
+        Update: {
+          id?: number;
+          link?: string | null;
+          title_ai?: string | null;
+        };
+        Relationships: [];
       };
     };
     Views: {
