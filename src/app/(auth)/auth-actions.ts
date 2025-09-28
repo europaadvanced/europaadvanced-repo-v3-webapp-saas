@@ -75,13 +75,13 @@ export async function signInWithPassword(formData: FormData): Promise<ActionResp
 export async function signUpWithPassword(formData: FormData): Promise<ActionResponse> {
   const email = String(formData.get('email') || '').trim();
   const password = String(formData.get('password') || '');
-   const phone = String(formData.get('phone') || '').trim();
+  const phone = String(formData.get('phone') || '').trim();
   if (!email || !password || !phone) return undefined;
   const supabase = await sb();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-     options: { emailRedirectTo: `${site}/auth/callback`, data: { phone } },
+    options: { emailRedirectTo: `${site}/auth/callback`, data: { phone } },
   });
   if (error) {
     return { data, error };
@@ -95,10 +95,15 @@ export async function signUpWithPassword(formData: FormData): Promise<ActionResp
 /** OAuth (expects form field `provider`) */
 export async function signInWithOAuth(formData: FormData): Promise<ActionResponse> {
   const provider = String(formData.get('provider') || '');
-  if (!provider) return undefined;
+  if (provider !== 'google') {
+    return {
+      data: null,
+      error: new Error('Unsupported sign-in provider.'),
+    };
+  }
   const supabase = await sb();
   const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: provider as any,
+    provider: 'google',
     options: { redirectTo: `${site}/auth/callback` },
   });
   if (error) {
