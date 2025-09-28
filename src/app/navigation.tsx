@@ -3,7 +3,6 @@ import { IoMenu } from 'react-icons/io5';
 
 import { AccountMenu } from '@/components/account-menu';
 import { Logo } from '@/components/logo';
-import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTrigger } from '@/components/ui/sheet';
 import { getSession } from '@/features/account/controllers/get-session';
 
@@ -26,7 +25,7 @@ export async function Navigation() {
 
           <AccountMenu signOut={signOut} />
 
-           {/* mobile menu when signed in */}
+          {/* mobile menu when signed in */}
           <Sheet>
             <SheetTrigger className="block lg:hidden">
               <IoMenu size={28} />
@@ -54,10 +53,6 @@ export async function Navigation() {
             <Link href="/login">Login</Link>
             <Link href="/signup">Register</Link>
           </nav>
-
-          <Button variant="sexy" className="hidden flex-shrink-0 lg:flex" asChild>
-            <Link href="/signup">Get started for free</Link>
-          </Button>
 
           {/* mobile menu when signed out */}
           <Sheet>
