@@ -1,61 +1,120 @@
-// src/app/tenders/page.tsx
-import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
-export const dynamic = "force-dynamic"; // don't cache SSR result
+import { getSession } from '@/features/account/controllers/get-session';
+import { getSubscription } from '@/features/account/controllers/get-subscription';
+import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
-export default async function TendersPage() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get: (name: string) => cookieStore.get(name)?.value,
-        set() {}, // not needed for a read page
-        remove() {},
-      },
-    }
-  );
+const PAGE_SIZE = 30;
 
-  const { data, error } = await supabase
-    .from("tenders")
-    .select("id, title_ai, link")
-    .order("id", { ascending: true })
-    .limit(50);
+type PageSearchParams = Record<string, string | string[] | undefined>;
+
+export const dynamic = 'force-dynamic'; // don't cache SSR result
+
+export default async function TendersPage({
+  searchParams,
+}: {
+  searchParams?: PageSearchParams;
+}) {
+  const [session, subscription] = await Promise.all([getSession(), getSubscription()]);
+
+  const requestedPageParam = searchParams?.page;
+  const requestedPageValue = Array.isArray(requestedPageParam) ? requestedPageParam[0] : requestedPageParam;
+  const requestedPageQuery = requestedPageValue ? `?page=${requestedPageValue}` : '';
+
+  if (!session) {
+    const redirectPath = `/tenders${requestedPageQuery}`;
+    redirect(`/login?redirect=${encodeURIComponent(redirectPath)}`);
+  }
+
+  if (!subscription) {
+    redirect('/pricing');
+  }
+
+  const parsedPage = Number(requestedPageValue ?? '1');
+  const currentPage = Number.isFinite(parsedPage) && parsedPage > 0 ? Math.floor(parsedPage) : 1;
+  const rangeStart = (currentPage - 1) * PAGE_SIZE;
+  const rangeEnd = rangeStart + PAGE_SIZE - 1;
+
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error, count } = await supabase
+    .from('tenders')
+    .select('id, title_ai, link', { count: 'exact' })
+    .order('id', { ascending: true })
+    .range(rangeStart, rangeEnd);
 
   if (error) {
     return (
       <div className="p-6">
         <h1 className="text-xl font-semibold">Tenders</h1>
-        <p className="text-red-500 mt-3">Error: {error.message}</p>
+        <p className="mt-3 text-red-500">Error: {error.message}</p>
       </div>
     );
   }
 
+  const tenders = data ?? [];
+  const totalItems = typeof count === 'number' ? count : tenders.length;
+  const totalPages = totalItems > 0 ? Math.ceil(totalItems / PAGE_SIZE) : 1;
+  const boundedPage = Math.min(Math.max(currentPage, 1), Math.max(totalPages, 1));
+
+  if (boundedPage !== currentPage) {
+    redirect(`/tenders?page=${boundedPage}`);
+  }
+
+  const showPagination = totalPages > 1;
+  const fromItem = totalItems === 0 ? 0 : rangeStart + 1;
+  const toItem = totalItems === 0 ? 0 : Math.min(rangeStart + tenders.length, totalItems);
+
   return (
     <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">Tenders</h1>
-      {!data?.length ? (
-        <p>No tenders yet.</p>
+      <h1 className="mb-4 text-xl font-semibold">Tenders</h1>
+      {!tenders.length ? (
+        <p>No tenders found.</p>
       ) : (
-        <ul className="space-y-2">
-          {data.map((t) => (
-            <li key={t.id} className="border p-3 rounded">
-              <div className="font-medium">{t.title_ai ?? "Untitled"}</div>
-              {t.link ? (
-                <a
-                  href={t.link}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-blue-500 underline"
-                >
-                  Open source
-                </a>
-              ) : null}
-            </li>
-          ))}
-        </ul>
+        <>
+          <p className="mb-4 text-sm text-neutral-400">
+            Showing {fromItem}-{toItem} of {totalItems} tenders
+          </p>
+          <ul className="space-y-2">
+            {tenders.map((tender) => (
+              <li key={tender.id} className="rounded border p-3">
+                <div className="font-medium">{tender.title_ai ?? 'Untitled'}</div>
+                {tender.link ? (
+                  <a
+                    href={tender.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-500 underline"
+                  >
+                    Open source
+                  </a>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          {showPagination ? (
+            <div className="mt-6 flex items-center justify-between">
+              <Link
+                className={`rounded border px-4 py-2 text-sm ${boundedPage === 1 ? 'pointer-events-none opacity-40' : ''}`}
+                href={`/tenders?page=${Math.max(1, boundedPage - 1)}`}
+                aria-disabled={boundedPage === 1}
+              >
+                Previous
+              </Link>
+              <span className="text-sm text-neutral-400">
+                Page {boundedPage} of {totalPages}
+              </span>
+              <Link
+                className={`rounded border px-4 py-2 text-sm ${boundedPage >= totalPages ? 'pointer-events-none opacity-40' : ''}`}
+                href={`/tenders?page=${Math.min(totalPages, boundedPage + 1)}`}
+                aria-disabled={boundedPage >= totalPages}
+              >
+                Next
+              </Link>
+            </div>
+          ) : null}
+        </>
       )}
     </div>
   );
