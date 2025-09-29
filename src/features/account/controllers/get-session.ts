@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
+import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 
 export async function getSession() {
   const supabase = await createSupabaseServerClient();
@@ -6,30 +7,28 @@ export async function getSession() {
   const { data, error } = await supabase.auth.getSession();
 
   if (error) {
-    console.error(error);
+    console.error('Failed to retrieve Supabase session', error);
+    return null;
   }
 
-  const session = data.session;
+  const session = data.session ?? null;
 
-  return session;
-}
-  const session = data.session;
+  const user = session?.user;
+  const metadataPhone = typeof user?.user_metadata?.phone === 'string' ? user.user_metadata.phone.trim() : '';
+  const authPhone = typeof user?.phone === 'string' ? user.phone.trim() : '';
+  const phone = metadataPhone || authPhone;
 
-  if (session?.user) {
-    const metadataPhone = session.user.user_metadata?.phone;
-    const phoneFromMetadata = typeof metadataPhone === 'string' ? metadataPhone.trim() : '';
-    const phoneFromProfile = typeof session.user.phone === 'string' ? session.user.phone.trim() : '';
-    const phone = phoneFromMetadata || phoneFromProfile;
-
-    if (phone) {
-      const { error: phoneUpdateError } = await supabase
+  if (user?.id && phone) {
+    try {
+      const { error: syncError } = await supabaseAdminClient
         .from('users')
-        .update({ phone })
-        .eq('id', session.user.id);
+        .upsert({ id: user.id, phone }, { onConflict: 'id' });
 
-      if (phoneUpdateError) {
-        console.error(phoneUpdateError);
+      if (syncError) {
+        console.error('Failed to sync Supabase user phone number', syncError);
       }
+    } catch (syncError) {
+      console.error('Unexpected error syncing Supabase user phone number', syncError);
     }
   }
 
