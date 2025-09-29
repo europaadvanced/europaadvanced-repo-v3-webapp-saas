@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { createServerClient } from '@supabase/ssr';
 
 import { ActionResponse } from '@/types/action-response';
+import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 
 async function sb() {
   // Resolve the cookie store once
@@ -30,34 +31,7 @@ async function sb() {
           }
         },
         remove(name: string, options?: any) {
-          try {
-            (store as any).delete(name, options);
-          } catch {
-            try {
-              (store as any).delete({ name, ...(options || {}) });
-            } catch {}
-          }
-        },
-      },
-    }
-  );
-}
-
-const site =
-  (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/+$/, '');
-
-/** Magic-link email login */
-export async function signInWithEmail(formData: FormData): Promise<ActionResponse> {
-  const email = String(formData.get('email') || '').trim();
-  if (!email) return undefined;
-  const supabase = await sb();
-  const { data, error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: `${site}/auth/callback` },
-  });
-  return { data, error };
-}
-
+@@ -61,50 +62,59 @@ export async function signInWithEmail(formData: FormData): Promise<ActionRespons
 /** Password login (optional) */
 export async function signInWithPassword(formData: FormData): Promise<ActionResponse> {
   const email = String(formData.get('email') || '').trim();
@@ -83,6 +57,15 @@ export async function signUpWithPassword(formData: FormData): Promise<ActionResp
     password,
     options: { emailRedirectTo: `${site}/auth/callback`, data: { phone } },
   });
+  if (!error && data?.user?.id && phone) {
+    const { error: phoneUpsertError } = await supabaseAdminClient
+      .from('users')
+      .upsert({ id: data.user.id, phone }, { onConflict: 'id' });
+
+    if (phoneUpsertError) {
+      console.error(phoneUpsertError);
+    }
+  }
   if (error) {
     return { data, error };
   }
