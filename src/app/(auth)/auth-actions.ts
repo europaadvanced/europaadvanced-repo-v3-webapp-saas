@@ -11,11 +11,15 @@ async function sb() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get: (name: string) => cookieStore.get(name)?.value,
-        set: (name: string, value: string, options: any) =>
-          cookieStore.set({ name, value, ...options }),
-        remove: (name: string, options: any) =>
-          cookieStore.set({ name, value: '', ...options, maxAge: 0 }),
+        getAll: () =>
+          cookieStore
+            .getAll()
+            .map(({ name, value }) => ({ name, value })),
+        setAll: (cookies) => {
+          cookies.forEach(({ name, value, options }) => {
+            cookieStore.set({ name, value, ...(options ?? {}) });
+          });
+        },
       },
     }
   );
@@ -40,22 +44,4 @@ export async function signUpWithPassword(formData: FormData) {
 
   if (error) return { error: error.message };
   return { data };
-}
-
-/** Email + password login */
-export async function signInWithPassword(formData: FormData) {
-  const email = String(formData.get('email') || '').trim();
-  const password = String(formData.get('password') || '').trim();
-  const supabase = await sb();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { error: error.message };
-
-  redirect('/tenders');
-}
-
-/** Sign out */
-export async function signOut() {
-  const supabase = await sb();
-  await supabase.auth.signOut();
-  redirect('/');
 }
