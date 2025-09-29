@@ -11,6 +11,10 @@ export async function getSession() {
 
   const session = data.session;
 
+  return session;
+}
+  const session = data.session;
+
   if (session?.user) {
     const metadataPhone = session.user.user_metadata?.phone;
     const phoneFromMetadata = typeof metadataPhone === 'string' ? metadataPhone.trim() : '';
