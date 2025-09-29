@@ -8,24 +8,29 @@ import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-clie
 const PAGE_SIZE = 30;
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
+type TendersPageProps = {
+  searchParams?: PageSearchParams | Promise<PageSearchParams>;
+};
 
 export const dynamic = 'force-dynamic'; // don't cache SSR result
 
-export default async function TendersPage({
-  searchParams,
-}: {
-  searchParams?: PageSearchParams;
-}) {
-  const [session, subscription] = await Promise.all([getSession(), getSubscription()]);
+export default async function TendersPage({ searchParams }: TendersPageProps) {
+  const resolvedSearchParams: PageSearchParams | undefined = searchParams
+    ? await Promise.resolve(searchParams)
+    : undefined;
 
-  const requestedPageParam = searchParams?.page;
+  const requestedPageParam = resolvedSearchParams?.page;
   const requestedPageValue = Array.isArray(requestedPageParam) ? requestedPageParam[0] : requestedPageParam;
   const requestedPageQuery = requestedPageValue ? `?page=${requestedPageValue}` : '';
+
+  const session = await getSession();
 
   if (!session) {
     const redirectPath = `/tenders${requestedPageQuery}`;
     redirect(`/login?redirect=${encodeURIComponent(redirectPath)}`);
   }
+
+  const subscription = await getSubscription();
 
   if (!subscription) {
     redirect('/pricing');
