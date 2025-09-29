@@ -9,5 +9,25 @@ export async function getSession() {
     console.error(error);
   }
 
-  return data.session;
+  const session = data.session;
+
+  if (session?.user) {
+    const metadataPhone = session.user.user_metadata?.phone;
+    const phoneFromMetadata = typeof metadataPhone === 'string' ? metadataPhone.trim() : '';
+    const phoneFromProfile = typeof session.user.phone === 'string' ? session.user.phone.trim() : '';
+    const phone = phoneFromMetadata || phoneFromProfile;
+
+    if (phone) {
+      const { error: phoneUpdateError } = await supabase
+        .from('users')
+        .update({ phone })
+        .eq('id', session.user.id);
+
+      if (phoneUpdateError) {
+        console.error(phoneUpdateError);
+      }
+    }
+  }
+
+  return session;
 }
