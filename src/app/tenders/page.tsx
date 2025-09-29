@@ -24,9 +24,10 @@ function sb() {
 type SP = { page?: string };
 
 export default async function TendersPage({
+  // ✅ Next 15 expects Promise here
   searchParams,
 }: {
-  searchParams?: SP;
+  searchParams?: Promise<SP>;
 }) {
   const supabase = sb();
 
@@ -34,8 +35,11 @@ export default async function TendersPage({
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) redirect('/login');
 
+  // Resolve search params
+  const resolved = (await searchParams) ?? {};
+  const page = Math.max(1, Number(resolved.page ?? '1'));
+
   // Pagination
-  const page = Math.max(1, Number(searchParams?.page ?? '1'));
   const perPage = 30;
   const from = (page - 1) * perPage;
   const to = from + perPage - 1;
@@ -58,7 +62,7 @@ export default async function TendersPage({
 
       <ul className="divide-y">
         {(data ?? []).map((row) => (
-          <li key={row.id} className="py-3">
+          <li key={row.id ?? row.link} className="py-3">
             <div className="font-medium">{row.title_ai ?? row.link}</div>
             <div className="text-sm text-muted-foreground">{row.issuing_authority}</div>
           </li>
