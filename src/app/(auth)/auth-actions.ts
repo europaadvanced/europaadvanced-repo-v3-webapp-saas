@@ -1,65 +1,61 @@
 'use server';
+
 import { cookies } from 'next/headers';
-import type { CookieOptions } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { createServerClient } from '@supabase/ssr';
 
-function createClient() {
-  const c = cookies();
+function sb() {
+  const cookieStore = cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return c.get(name)?.value;
-        },
-        set(name: string, value: string, options?: CookieOptions) {
-          c.set(name, value, options);
-        },
-        remove(name: string, options?: CookieOptions) {
-          c.set(name, '', { ...options, maxAge: 0 });
-        },
+        get: (name: string) => cookieStore.get(name)?.value,
+        set: (name: string, value: string, options: any) =>
+          cookieStore.set({ name, value, ...options }),
+        remove: (name: string, options: any) =>
+          cookieStore.set({ name, value: '', ...options, maxAge: 0 }),
       },
     }
   );
 }
 
-/** Password login */
-export async function signInWithPassword(formData: FormData) {
-  const email = String(formData.get('email') || '').trim();
-  const password = String(formData.get('password') || '').trim();
-  if (!email || !password) return { error: 'Missing email/password' };
-
-  const supabase = createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  return { error: error?.message ?? null };
-}
-
-/** Password signup – also saves phone into user metadata */
+/** Email + password signup (stores phone in user metadata) */
 export async function signUpWithPassword(formData: FormData) {
   const email = String(formData.get('email') || '').trim();
   const password = String(formData.get('password') || '').trim();
   const phone = String(formData.get('phone') || '').trim();
-  if (!email || !password) return { error: 'Missing email/password' };
+  if (!email || !password) return { error: 'Missing credentials' };
 
-  const supabase = createClient();
-  const site = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_VERCEL_URL || '';
-  const emailRedirectTo = `${site}/auth/callback`;
-
-  const { error } = await supabase.auth.signUp({
+  const supabase = sb();
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo,
-      data: { phone }, // stored in user_metadata
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      data: { phone },
     },
   });
-  return { error: error?.message ?? null };
+
+  if (error) return { error: error.message };
+  return { data };
+}
+
+/** Email + password login */
+export async function signInWithPassword(formData: FormData) {
+  const email = String(formData.get('email') || '').trim();
+  const password = String(formData.get('password') || '').trim();
+  const supabase = sb();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return { error: error.message };
+
+  redirect('/tenders');
 }
 
 /** Sign out */
 export async function signOut() {
-  const supabase = createClient();
-  const { error } = await supabase.auth.signOut();
-  return { error: error?.message ?? null };
+  const supabase = sb();
+  await supabase.auth.signOut();
+  redirect('/');
 }
