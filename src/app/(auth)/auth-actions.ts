@@ -1,139 +1,65 @@
 'use server';
-
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+import type { CookieOptions } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 
-import { ActionResponse } from '@/types/action-response';
-
-async function sb() {
-  // Resolve the cookie store once
-  const store = cookies();
-
+function createClient() {
+  const c = cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         get(name: string) {
-          return store.get(name)?.value;
+          return c.get(name)?.value;
         },
-        // do not over-type options; Next’s type surface varies by version
-        set(name: string, value: string, options?: any) {
-          try {
-            // both signatures are accepted across versions
-            (store as any).set(name, value, options);
-          } catch (error) {
-            try {
-              (store as any).set({ name, value, ...(options || {}) });
-            } catch (nestedError) {
-              console.error('Failed to persist Supabase auth cookie', error, nestedError);
-            }
-          }
+        set(name: string, value: string, options?: CookieOptions) {
+          c.set(name, value, options);
         },
-        remove(name: string, options?: any) {
-          try {
-            (store as any).delete(name, options);
-          } catch (error) {
-            try {
-              (store as any).delete({ name, ...(options || {}) });
-            } catch (nestedError) {
-              console.error('Failed to remove Supabase auth cookie', error, nestedError);
-            }
-          }
+        remove(name: string, options?: CookieOptions) {
+          c.set(name, '', { ...options, maxAge: 0 });
         },
       },
     }
   );
 }
 
-const site =
-  (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/+$/, '');
-
-/** Magic-link email login */
-export async function signInWithEmail(formData: FormData): Promise<ActionResponse> {
+/** Password login */
+export async function signInWithPassword(formData: FormData) {
   const email = String(formData.get('email') || '').trim();
-  if (!email) return undefined;
-  const supabase = await sb();
-  const { data, error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: `${site}/auth/callback` },
-  });
-  return { data, error };
+  const password = String(formData.get('password') || '').trim();
+  if (!email || !password) return { error: 'Missing email/password' };
+
+  const supabase = createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  return { error: error?.message ?? null };
 }
 
-/** Password login (optional) */
-export async function signInWithPassword(formData: FormData): Promise<ActionResponse> {
+/** Password signup – also saves phone into user metadata */
+export async function signUpWithPassword(formData: FormData) {
   const email = String(formData.get('email') || '').trim();
-  const password = String(formData.get('password') || '');
-  if (!email || !password) return undefined;
-  const supabase = await sb();
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) {
-    return { data, error };
-  }
-  redirect('/account');
-}
-
-/** Password signup */
-export async function signUpWithPassword(formData: FormData): Promise<ActionResponse> {
-  const email = String(formData.get('email') || '').trim();
-  const password = String(formData.get('password') || '');
+  const password = String(formData.get('password') || '').trim();
   const phone = String(formData.get('phone') || '').trim();
-  if (!email || !password || !phone) return undefined;
-  const supabase = await sb();
-  const { data, error } = await supabase.auth.signUp({
+  if (!email || !password) return { error: 'Missing email/password' };
+
+  const supabase = createClient();
+  const site = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_VERCEL_URL || '';
+  const emailRedirectTo = `${site}/auth/callback`;
+
+  const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${site}/auth/callback`, data: { phone } },
+    options: {
+      emailRedirectTo,
+      data: { phone }, // stored in user_metadata
+    },
   });
-  if (!error && data?.user?.id && phone) {
-    const { error: phoneUpsertError } = await supabaseAdminClient
-      .from('users')
-      .upsert({ id: data.user.id, phone }, { onConflict: 'id' });
-
-    if (phoneUpsertError) {
-      console.error(phoneUpsertError);
-    }
-  }
-  if (error) {
-    return { data, error };
-  }
-  if (data?.session) {
-    redirect('/account');
-  }
-  return { data, error: null };
-}
-
-/** OAuth (expects form field `provider`) */
-export async function signInWithOAuth(formData: FormData): Promise<ActionResponse> {
-  const provider = String(formData.get('provider') || '');
-  if (provider !== 'google') {
-    return {
-      data: null,
-      error: new Error('Unsupported sign-in provider.'),
-    };
-  }
-  const supabase = await sb();
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: `${site}/auth/callback` },
-  });
-  if (error) {
-    return { data, error };
-  }
-  if (!data?.url) {
-    return {
-      data,
-      error: new Error('Unable to initiate the OAuth flow. Please try again.'),
-    };
-  }
-  redirect(data.url);
+  return { error: error?.message ?? null };
 }
 
 /** Sign out */
-export async function signOut(): Promise<ActionResponse> {
-  const supabase = await sb();
+export async function signOut() {
+  const supabase = createClient();
   const { error } = await supabase.auth.signOut();
-  return { data: null, error };
+  return { error: error?.message ?? null };
 }
