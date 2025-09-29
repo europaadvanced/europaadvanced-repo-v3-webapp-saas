@@ -6,8 +6,8 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createServerClient } from '@supabase/ssr';
 
-function sb() {
-  const cookieStore = cookies();
+async function sb() {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -29,7 +29,7 @@ export default async function TendersPage({
 }: {
   searchParams?: Promise<SP>;
 }) {
-  const supabase = sb();
+  const supabase = await sb();
 
   // Auth guard
   const { data: userData } = await supabase.auth.getUser();
@@ -55,25 +55,3 @@ export default async function TendersPage({
   const total = count ?? 0;
   const hasPrev = page > 1;
   const hasNext = to + 1 < total;
-
-  return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Tenders</h1>
-
-      <ul className="divide-y">
-        {(data ?? []).map((row) => (
-          <li key={row.id ?? row.link} className="py-3">
-            <div className="font-medium">{row.title_ai ?? row.link}</div>
-            <div className="text-sm text-muted-foreground">{row.issuing_authority}</div>
-          </li>
-        ))}
-      </ul>
-
-      <div className="flex items-center gap-3">
-        {hasPrev ? <Link href={`/tenders?page=${page - 1}`} className="btn">Prev</Link> : null}
-        <span className="text-sm">Page {page}</span>
-        {hasNext ? <Link href={`/tenders?page=${page + 1}`} className="btn">Next</Link> : null}
-      </div>
-    </div>
-  );
-}
