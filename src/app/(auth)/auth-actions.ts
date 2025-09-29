@@ -4,8 +4,8 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createServerClient } from '@supabase/ssr';
 
-function sb() {
-  const cookieStore = cookies();
+async function sb() {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -28,7 +28,7 @@ export async function signUpWithPassword(formData: FormData) {
   const phone = String(formData.get('phone') || '').trim();
   if (!email || !password) return { error: 'Missing credentials' };
 
-  const supabase = sb();
+  const supabase = await sb();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -46,7 +46,7 @@ export async function signUpWithPassword(formData: FormData) {
 export async function signInWithPassword(formData: FormData) {
   const email = String(formData.get('email') || '').trim();
   const password = String(formData.get('password') || '').trim();
-  const supabase = sb();
+  const supabase = await sb();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: error.message };
 
@@ -55,7 +55,7 @@ export async function signInWithPassword(formData: FormData) {
 
 /** Sign out */
 export async function signOut() {
-  const supabase = sb();
+  const supabase = await sb();
   await supabase.auth.signOut();
   redirect('/');
 }
