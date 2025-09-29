@@ -1,3 +1,6 @@
++9
+-5
+
 'use server';
 
 import { cookies } from 'next/headers';
@@ -5,11 +8,10 @@ import { redirect } from 'next/navigation';
 import { createServerClient } from '@supabase/ssr';
 
 import { ActionResponse } from '@/types/action-response';
-import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 
 async function sb() {
   // Resolve the cookie store once
-  const store = await cookies();
+  const store = cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,14 +26,45 @@ async function sb() {
           try {
             // both signatures are accepted across versions
             (store as any).set(name, value, options);
-          } catch {
+          } catch (error) {
             try {
               (store as any).set({ name, value, ...(options || {}) });
-            } catch {}
+            } catch (nestedError) {
+              console.error('Failed to persist Supabase auth cookie', error, nestedError);
+            }
           }
         },
         remove(name: string, options?: any) {
-@@ -61,50 +62,59 @@ export async function signInWithEmail(formData: FormData): Promise<ActionRespons
+          try {
+            (store as any).delete(name, options);
+          } catch (error) {
+            try {
+              (store as any).delete({ name, ...(options || {}) });
+            } catch (nestedError) {
+              console.error('Failed to remove Supabase auth cookie', error, nestedError);
+            }
+          }
+        },
+      },
+    }
+  );
+}
+
+const site =
+  (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/+$/, '');
+
+/** Magic-link email login */
+export async function signInWithEmail(formData: FormData): Promise<ActionResponse> {
+  const email = String(formData.get('email') || '').trim();
+  if (!email) return undefined;
+  const supabase = await sb();
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: `${site}/auth/callback` },
+  });
+  return { data, error };
+}
+
 /** Password login (optional) */
 export async function signInWithPassword(formData: FormData): Promise<ActionResponse> {
   const email = String(formData.get('email') || '').trim();
