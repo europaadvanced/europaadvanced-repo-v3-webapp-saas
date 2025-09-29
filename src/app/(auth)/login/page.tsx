@@ -1,31 +1,12 @@
-import { redirect } from 'next/navigation';
+import { signInWithPassword } from '../auth-actions';
 
-import { getSession } from '@/features/account/controllers/get-session';
-import { getSubscription } from '@/features/account/controllers/get-subscription';
-
-import { signInWithOAuth, signInWithPassword, signUpWithPassword } from '../auth-actions';
-import { AuthUI } from '../auth-ui';
-
-export default async function LoginPage() {
-  const session = await getSession();
-  const subscription = await getSubscription();
-
-  if (session && subscription) {
-    redirect('/account');
-  }
-
-  if (session && !subscription) {
-    redirect('/pricing');
-  }
-
+export default function LoginPage() {
   return (
-    <section className='py-xl m-auto flex h-full max-w-lg items-center'>
-      <AuthUI
-        mode='login'
-        signInWithOAuth={signInWithOAuth}
-        signInWithPassword={signInWithPassword}
-        signUpWithPassword={signUpWithPassword}
-      />
-    </section>
+    <form action={signInWithPassword} className="space-y-4 max-w-sm">
+      <h1 className="text-xl font-semibold">Log in</h1>
+      <input name="email" type="email" required placeholder="Email" className="input"/>
+      <input name="password" type="password" required placeholder="Password" className="input"/>
+      <button className="btn">Log in</button>
+    </form>
   );
 }
