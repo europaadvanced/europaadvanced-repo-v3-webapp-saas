@@ -7,12 +7,12 @@ import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
 type Tender = {
-  id: string | number;
-  title: string | null;
-  summary: string | null;
+  id: string;
+  title_ai: string | null;
+  description_long: string | null;
   publication_date: string | null;
   deadline_date: string | null;
-  source_url: string | null;
+  link: string | null;
 };
 
 export default async function TendersPage({
@@ -41,7 +41,7 @@ export default async function TendersPage({
   const { data, count, error } = await supabase
     .from('tenders')
     .select(
-      'id,title,summary,publication_date,deadline_date,source_url',
+      'id,title_ai,description_long,publication_date,deadline_date,link',
       { count: 'exact' }
     )
     .order('publication_date', { ascending: false, nullsFirst: false })
@@ -75,20 +75,28 @@ export default async function TendersPage({
             </li>
           )}
 
-          {tenders.map((tender) => (
-            <li key={tender.id} className="flex flex-col gap-4 p-6">
-              <div className="flex flex-col gap-1">
-                <h2 className="text-xl font-medium">
-                  {tender.title ?? 'Untitled tender'}
-                </h2>
-                {tender.summary ? (
+          {tenders.map((tender) => {
+            const normalizedSummary =
+              tender.description_long?.replace(/\s+/g, ' ').trim() ?? null;
+            const summarySnippet =
+              normalizedSummary && normalizedSummary.length > 280
+                ? `${normalizedSummary.slice(0, 280)}…`
+                : normalizedSummary;
+
+            return (
+              <li key={tender.id} className="flex flex-col gap-4 p-6">
+                <div className="flex flex-col gap-1">
+                  <h2 className="text-xl font-medium">
+                    {tender.title_ai ?? 'Untitled tender'}
+                  </h2>
+                {summarySnippet ? (
                   <p className="text-sm text-muted-foreground">
-                    {tender.summary}
+                    {summarySnippet}
                   </p>
                 ) : null}
-              </div>
+                </div>
 
-              <dl className="grid gap-4 text-sm sm:grid-cols-3">
+                <dl className="grid gap-4 text-sm sm:grid-cols-3">
                 <div>
                   <dt className="font-medium text-foreground">Published</dt>
                   <dd className="text-muted-foreground">
@@ -110,12 +118,12 @@ export default async function TendersPage({
                 <div>
                   <dt className="font-medium text-foreground">Source</dt>
                   <dd className="text-muted-foreground">
-                    {tender.source_url ? (
+                    {tender.link ? (
                       <a
                         className="underline"
                         target="_blank"
                         rel="noreferrer"
-                        href={tender.source_url}
+                        href={tender.link}
                       >
                         View tender
                       </a>
@@ -126,7 +134,8 @@ export default async function TendersPage({
                 </div>
               </dl>
             </li>
-          ))}
+            );
+          })}
         </ul>
       </section>
 
