@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ActionResponse } from '@/types/action-response';
+import type { ActionResponse } from '@/types/action-response';
 
 import { useToast } from './ui/use-toast';
 
