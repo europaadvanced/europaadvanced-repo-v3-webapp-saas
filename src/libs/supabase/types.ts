@@ -184,7 +184,7 @@ export interface Database {
         Insert: {
           avatar_url?: string | null;
           billing_address?: Json | null;
-          full_name?: string | null;
+             full_name?: string | null;
           id: string;
           phone?: string | null;
           payment_method?: Json | null;
@@ -209,20 +209,29 @@ export interface Database {
       };
       tenders: {
         Row: {
-          id: number;
+          id: string;
+          deadline_date: string | null;
+          description_long: string | null;
           link: string | null;
+          publication_date: string | null;
           title_ai: string | null;
-        };
+        } & Record<string, unknown>;
         Insert: {
-          id?: number;
+          id?: string;
+          deadline_date?: string | null;
+          description_long?: string | null;
           link?: string | null;
+          publication_date?: string | null;
           title_ai?: string | null;
-        };
+        } & Record<string, unknown>;
         Update: {
-          id?: number;
+          id?: string;
+          deadline_date?: string | null;
+          description_long?: string | null;
           link?: string | null;
+          publication_date?: string | null;
           title_ai?: string | null;
-        };
+        } & Record<string, unknown>;
         Relationships: [];
       };
     };
