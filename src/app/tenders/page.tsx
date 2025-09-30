@@ -2,12 +2,12 @@ export const revalidate = 0; // no caching
 export const dynamic = 'force-dynamic'; // always SSR
 
 import Link from 'next/link';
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { createServerClient } from '@supabase/ssr';
+
+import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
 type Tender = {
-  id: string;
+  id: string | number;
   title: string | null;
   summary: string | null;
   publication_date: string | null;
@@ -15,32 +15,12 @@ type Tender = {
   source_url: string | null;
 };
 
-type SearchParams = { page?: string };
-
-async function getSupabaseServerClient() {
-  const cookieStore = cookies();
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get: (name: string) => cookieStore.get(name)?.value,
-        set: (name: string, value: string, options: any) =>
-          cookieStore.set({ name, value, ...options }),
-        remove: (name: string, options: any) =>
-          cookieStore.set({ name, value: '', ...options, maxAge: 0 }),
-      },
-    }
-  );
-}
-
 export default async function TendersPage({
   searchParams,
 }: {
-  searchParams?: Promise<SearchParams>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const supabase = await getSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
 
   // Auth guard – redirect to login if no authenticated user is found.
   const { data: userData } = await supabase.auth.getUser();
@@ -49,7 +29,10 @@ export default async function TendersPage({
   }
 
   const resolvedSearchParams = (await searchParams) ?? {};
-  const currentPage = Math.max(1, Number(resolvedSearchParams.page ?? '1'));
+  const pageParam = resolvedSearchParams.page;
+  const pageValue = Array.isArray(pageParam) ? pageParam[0] : pageParam;
+  const parsedPage = Number.parseInt(pageValue ?? '1', 10);
+  const currentPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
   const perPage = 30;
   const from = (currentPage - 1) * perPage;
@@ -57,8 +40,11 @@ export default async function TendersPage({
 
   const { data, count, error } = await supabase
     .from('tenders')
-    .select('*', { count: 'exact' })
-    .order('publication_date', { nulls: 'last' })
+    .select(
+      'id,title,summary,publication_date,deadline_date,source_url',
+      { count: 'exact' }
+    )
+    .order('publication_date', { ascending: false, nulls: 'last' })
     .range(from, to);
 
   if (error) {
