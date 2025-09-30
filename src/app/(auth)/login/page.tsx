@@ -1,8 +1,14 @@
 import { signInWithPassword } from '../auth-actions';
 
 export default function LoginPage() {
+  const handleLogin = async (formData: FormData) => {
+    'use server';
+
+    await signInWithPassword(formData);
+  };
+
   return (
-    <form action={signInWithPassword} className='max-w-sm space-y-4'>
+    <form action={handleLogin} className='max-w-sm space-y-4'>
       <h1 className='text-xl font-semibold'>Log in</h1>
       <input
         name='email'
