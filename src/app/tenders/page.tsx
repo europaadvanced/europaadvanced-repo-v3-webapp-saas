@@ -44,7 +44,7 @@ export default async function TendersPage({
       'id,title,summary,publication_date,deadline_date,source_url',
       { count: 'exact' }
     )
-    .order('publication_date', { ascending: false, nulls: 'last' })
+    .order('publication_date', { ascending: false, nullsFirst: false })
     .range(from, to);
 
   if (error) {
