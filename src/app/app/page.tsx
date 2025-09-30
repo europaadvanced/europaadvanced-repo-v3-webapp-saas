@@ -1,25 +1,34 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
-export default async function AppHome(){
-  const cookieStore = await cookies();
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { global:{ headers:{ Cookie: cookieStore.toString() } }}
+export default async function AppHome() {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/login');
+  }
+
+  const { data: subscription, error } = await supabase
+    .from('subscriptions')
+    .select('status')
+    .eq('user_id', user.id)
+    .in('status', ['active', 'trialing'])
+    .maybeSingle();
+
+  if (error || !subscription) {
+    redirect('/pricing');
+  }
+
+  return (
+    <main className='p-6'>
+      <h1 className='mb-2 text-xl'>Welcome</h1>
+      <p>Your subscription is active.</p>
+      <a className='underline' href='/tenders'>
+        Go to Tenders
+      </a>
+    </main>
   );
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
-
-  const { data: sub } = await supabase.from('subscriptions')
-    .select('status').eq('user_id', user.id).in('status',['active','trialing']).maybeSingle();
-
-  if (!sub) return <meta httpEquiv="refresh" content="0; url=/pricing" />;
-
-  return (<main className="p-6">
-    <h1 className="text-xl mb-2">Welcome</h1>
-    <p>Your subscription is active.</p>
-    <a className="underline" href="/tenders">Go to Tenders</a>
-  </main>);
 }
