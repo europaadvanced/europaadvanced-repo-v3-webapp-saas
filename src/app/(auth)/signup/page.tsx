@@ -1,8 +1,14 @@
 import { signUpWithPassword } from '../auth-actions';
 
 export default function SignupPage() {
+  const handleSignup = async (formData: FormData) => {
+    'use server';
+
+    await signUpWithPassword(formData);
+  };
+
   return (
-    <form action={signUpWithPassword} className="max-w-sm space-y-4">
+    <form action={handleSignup} className="max-w-sm space-y-4">
       <h1 className="text-xl font-semibold">Create account</h1>
       <input
         name="email"
