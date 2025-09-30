@@ -2,7 +2,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { Container } from '@/components/container';
-import { Button } from '@/components/ui/button';
 import { PricingSection } from '@/features/pricing/components/pricing-section';
 
 export default async function HomePage() {
@@ -26,9 +25,6 @@ function HeroSection() {
             </span>
           </div>
           <h1>Instantly craft stunning Twitter banners.</h1>
-          <Button asChild variant='sexy'>
-            <Link href='/signup'>Get started for free</Link>
-          </Button>
         </div>
       </Container>
       <Image
@@ -51,14 +47,6 @@ function ExamplesSection() {
         <Image
           className='flex-shrink-0'
           src='/example1.png'
-          width={600}
-          height={200}
-          alt='Example of a generated banner'
-          quality={100}
-        />
-        <Image
-          className='flex-shrink-0'
-          src='/example2.png'
           width={600}
           height={200}
           alt='Example of a generated banner'
