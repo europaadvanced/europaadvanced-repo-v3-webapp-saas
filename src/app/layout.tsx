@@ -9,9 +9,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/utils/cn";
 import { Analytics } from "@vercel/analytics/react";
 import { ThemeProvider } from "@/components/theme-provider";
-:root {
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-}
 
 import { Navigation } from "./navigation";
 
