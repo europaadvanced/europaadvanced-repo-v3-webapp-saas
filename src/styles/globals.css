@@ -46,6 +46,9 @@
   --input: 240 3.7% 15%;
   --ring: 216.85 89.95% 60%;
 }
+:root {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+}
 
   ::selection {
     @apply text-black;
