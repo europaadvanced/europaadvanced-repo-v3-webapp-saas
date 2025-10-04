@@ -1,25 +1,23 @@
-'use server';
+"use server";
 
-import { redirect } from 'next/navigation';
-
-import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import type { ActionResponse } from '@/types/action-response';
+import { createSupabaseServerClient } from "@/libs/supabase/supabase-server-client";
+import type { ActionResponse } from "@/types/action-response";
 
 function invalid(message: string): ActionResponse {
   return { error: { message } };
 }
 
 export async function signUpWithPassword(formData: FormData): Promise<ActionResponse> {
-  const email = String(formData.get('email') ?? '').trim();
-  const password = String(formData.get('password') ?? '').trim();
-  const phone = String(formData.get('phone') ?? '').trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
 
   if (!email || !password) {
-    return invalid('Please provide both email and password.');
+    return invalid("Please provide both email and password.");
   }
 
   if (!phone) {
-    return invalid('Please provide a phone number.');
+    return invalid("Please provide a phone number.");
   }
 
   const supabase = await createSupabaseServerClient();
@@ -43,11 +41,11 @@ export async function signUpWithPassword(formData: FormData): Promise<ActionResp
 
   if (data.user && phone) {
     const { error: profileError } = await supabase
-      .from('users')
-      .upsert({ id: data.user.id, phone }, { onConflict: 'id' });
+      .from("users")
+      .upsert({ id: data.user.id, phone }, { onConflict: "id" });
 
     if (profileError) {
-      console.warn('Failed to persist phone number to public.users:', profileError.message);
+      console.warn("Failed to persist phone number to public.users:", profileError.message);
     }
   }
 
@@ -55,11 +53,11 @@ export async function signUpWithPassword(formData: FormData): Promise<ActionResp
 }
 
 export async function signInWithPassword(formData: FormData): Promise<ActionResponse> {
-  const email = String(formData.get('email') ?? '').trim();
-  const password = String(formData.get('password') ?? '').trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "").trim();
 
   if (!email || !password) {
-    return invalid('Please provide both email and password.');
+    return invalid("Please provide both email and password.");
   }
 
   const supabase = await createSupabaseServerClient();
@@ -69,7 +67,6 @@ export async function signInWithPassword(formData: FormData): Promise<ActionResp
     return invalid(error.message);
   }
 
-  redirect('/tenders');
   return { error: null };
 }
 
