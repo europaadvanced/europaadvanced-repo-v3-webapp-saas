@@ -1,41 +1,12 @@
-import { signUpWithPassword } from '../auth-actions';
+import { AuthUI } from "../auth-ui";
+import { signInWithPassword, signUpWithPassword } from "../auth-actions";
 
 export default function SignupPage() {
-  const handleSignup = async (formData: FormData) => {
-    'use server';
-
-    await signUpWithPassword(formData);
-  };
-
   return (
-    <form action={handleSignup} className="max-w-sm space-y-4">
-      <h1 className="text-xl font-semibold">Create account</h1>
-      <input
-        name="email"
-        type="email"
-        required
-        placeholder="Email"
-        autoComplete="email"
-        className="input"
-      />
-      <input
-        name="password"
-        type="password"
-        required
-        minLength={8}
-        placeholder="Password"
-        autoComplete="new-password"
-        className="input"
-      />
-      <input
-        name="phone"
-        type="tel"
-        required
-        placeholder="Phone number"
-        autoComplete="tel"
-        className="input"
-      />
-      <button className="btn">Create account</button>
-    </form>
+    <AuthUI
+      mode="signup"
+      signInWithPassword={signInWithPassword}
+      signUpWithPassword={signUpWithPassword}
+    />
   );
 }
