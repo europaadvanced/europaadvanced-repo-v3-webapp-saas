@@ -1,12 +1,12 @@
-import Link from 'next/link';
-import { IoMenu } from 'react-icons/io5';
+import Link from "next/link";
+import { IoMenu } from "react-icons/io5";
 
-import { AccountMenu } from '@/components/account-menu';
-import { Logo } from '@/components/logo';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTrigger } from '@/components/ui/sheet';
-import { getSession } from '@/features/account/controllers/get-session';
+import { AccountMenu } from "@/components/account-menu";
+import { Logo } from "@/components/logo";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTrigger } from "@/components/ui/sheet";
+import { getSession } from "@/features/account/controllers/get-session";
 
-import { signOut } from './(auth)/auth-actions';
+import { signOut } from "./(auth)/auth-actions";
 
 export async function Navigation() {
   const session = await getSession();
@@ -16,7 +16,7 @@ export async function Navigation() {
       {session ? (
         <>
           {/* desktop links when signed in */}
-          <nav className="hidden lg:flex items-center gap-4">
+          <nav className="hidden items-center gap-4 lg:flex">
             <Link href="/app">App</Link>
             <Link href="/tenders">Tenders</Link>
             <Link href="/pricing">Pricing</Link>
@@ -30,7 +30,7 @@ export async function Navigation() {
             <SheetTrigger className="block lg:hidden">
               <IoMenu size={28} />
             </SheetTrigger>
-            <SheetContent className="w-full bg-black">
+            <SheetContent className="w-full bg-card">
               <SheetHeader>
                 <Logo />
                 <SheetDescription className="py-8">
@@ -48,7 +48,7 @@ export async function Navigation() {
       ) : (
         <>
           {/* desktop links when signed out */}
-          <nav className="hidden lg:flex items-center gap-4">
+          <nav className="hidden items-center gap-4 lg:flex">
             <Link href="/pricing">Pricing</Link>
             <Link href="/login">Login</Link>
             <Link href="/signup">Register</Link>
@@ -59,7 +59,7 @@ export async function Navigation() {
             <SheetTrigger className="block lg:hidden">
               <IoMenu size={28} />
             </SheetTrigger>
-            <SheetContent className="w-full bg-black">
+            <SheetContent className="w-full bg-card">
               <SheetHeader>
                 <Logo />
                 <SheetDescription className="py-8">
