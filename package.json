@@ -1,6 +1,7 @@
 {
   "name": "UPDATE_THIS_WITH_YOUR_APP_NAME",
   "version": "0.1.0",
+  "packageManager": "npm@10",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
