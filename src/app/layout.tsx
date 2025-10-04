@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/utils/cn";
 import { Analytics } from "@vercel/analytics/react";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeToggle } from "@/components/theme-toggle"; // ← add this
 
 import { Navigation } from "./navigation";
 import "@/styles/globals.css";
@@ -61,7 +62,10 @@ async function AppBar() {
   return (
     <header className="flex items-center justify-between py-8">
       <Logo />
-      <Navigation />
+      <div className="flex items-center gap-3">
+        <Navigation />
+        <ThemeToggle /> {/* ← add this */}
+      </div>
     </header>
   );
 }
