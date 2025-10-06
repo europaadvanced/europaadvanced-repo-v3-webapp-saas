@@ -174,14 +174,6 @@ export interface Database {
       };
       users: {
         Row: {
-          avatar_url: string | null;
-          billing_address: Json | null;
-          full_name: string | null;
-          id: string;
-          phone: string | null;
-          payment_method: Json | null;
-        };
-        Insert: {
           avatar_url?: string | null;
           billing_address?: Json | null;
              full_name?: string | null;
@@ -207,63 +199,50 @@ export interface Database {
           }
         ];
       };
-      tenders: {
+      tenders_staging: {
         Row: {
-          id: string;
+          created_at: string;
           deadline_date: string | null;
           description_long: string | null;
+          id: string;
           link: string | null;
           publication_date: string | null;
           title_ai: string | null;
-        } & Record<string, unknown>;
+        };
         Insert: {
-          id?: string;
+          created_at?: string;
           deadline_date?: string | null;
           description_long?: string | null;
+          id?: string;
           link?: string | null;
           publication_date?: string | null;
           title_ai?: string | null;
-        } & Record<string, unknown>;
+        };
         Update: {
-          id?: string;
+          created_at?: string;
           deadline_date?: string | null;
           description_long?: string | null;
+          id?: string;
           link?: string | null;
           publication_date?: string | null;
           title_ai?: string | null;
-        } & Record<string, unknown>;
-        Relationships: [];
-      };
-       tenders_staging: {
-        Row: {
-          id: string;
-          deadline_date: string | null;
-          description_long: string | null;
-          link: string | null;
-          publication_date: string | null;
-          title_ai: string | null;
-        } & Record<string, unknown>;
-        Insert: {
-          id?: string;
-          deadline_date?: string | null;
-          description_long?: string | null;
-          link?: string | null;
-          publication_date?: string | null;
-          title_ai?: string | null;
-        } & Record<string, unknown>;
-        Update: {
-          id?: string;
-          deadline_date?: string | null;
-          description_long?: string | null;
-          link?: string | null;
-          publication_date?: string | null;
-          title_ai?: string | null;
-        } & Record<string, unknown>;
+        };
         Relationships: [];
       };
     };
     Views: {
-      [_ in never]: never;
+      tenders: {
+        Row: {
+          created_at: string;
+          deadline_date: string | null;
+          description_long: string | null;
+          id: string;
+          link: string | null;
+          publication_date: string | null;
+          title_ai: string | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       [_ in never]: never;
