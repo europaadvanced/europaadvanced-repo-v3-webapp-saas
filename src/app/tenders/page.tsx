@@ -39,7 +39,7 @@ export default async function TendersPage({
   const to = from + perPage - 1;
 
   const { data, count, error } = await supabase
-    .from('tenders')
+    .from('tenders_staging')
     .select(
       'id,title_ai,description_long,publication_date,deadline_date,link',
       { count: 'exact' }
