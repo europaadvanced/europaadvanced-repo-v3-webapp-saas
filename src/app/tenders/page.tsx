@@ -16,10 +16,15 @@ type Tender = {
   link: string | null;
 };
 
+type TendersPageSearchParams =
+  | Record<string, string | string[] | undefined>
+  | Promise<Record<string, string | string[] | undefined>>
+  | undefined;
+
 export default async function TendersPage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: TendersPageSearchParams;
 }) {
   const supabase = await createSupabaseServerClient();
 
@@ -29,7 +34,7 @@ export default async function TendersPage({
     redirect('/login');
   }
 
-  const resolvedSearchParams = searchParams ?? {};
+  const resolvedSearchParams = (await Promise.resolve(searchParams)) ?? {};
   const pageParam = resolvedSearchParams.page;
   const pageValue = Array.isArray(pageParam) ? pageParam[0] : pageParam;
   const parsedPage = Number.parseInt(pageValue ?? '1', 10);
