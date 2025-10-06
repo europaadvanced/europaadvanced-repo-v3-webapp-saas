@@ -234,6 +234,33 @@ export interface Database {
         } & Record<string, unknown>;
         Relationships: [];
       };
+       tenders_staging: {
+        Row: {
+          id: string;
+          deadline_date: string | null;
+          description_long: string | null;
+          link: string | null;
+          publication_date: string | null;
+          title_ai: string | null;
+        } & Record<string, unknown>;
+        Insert: {
+          id?: string;
+          deadline_date?: string | null;
+          description_long?: string | null;
+          link?: string | null;
+          publication_date?: string | null;
+          title_ai?: string | null;
+        } & Record<string, unknown>;
+        Update: {
+          id?: string;
+          deadline_date?: string | null;
+          description_long?: string | null;
+          link?: string | null;
+          publication_date?: string | null;
+          title_ai?: string | null;
+        } & Record<string, unknown>;
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
