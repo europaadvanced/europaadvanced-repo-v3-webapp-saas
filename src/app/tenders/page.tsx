@@ -7,11 +7,20 @@ import TendersDashboard from './tenders-dashboard';
 
 type Tender = {
   id: string;
-  title_ai: string | null;
-  description_long: string | null;
-  publication_date: string | null;
-  deadline_date: string | null;
-  link: string | null;
+  title: string | null;
+  summary: string | null;
+  description: string | null;
+  publicationDate: string | null;
+  deadlineDate: string | null;
+  callStatus: string | null;
+  issuingAuthority: string | null;
+  fundingInstitution: string | null;
+  callUrl: string | null;
+  sourceLink: string | null;
+  bullets: string[];
+  applicationTips: string[];
+  redFlags: string[];
+  keywords: string[];
 };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -36,8 +45,24 @@ export default async function TendersPage({ searchParams }: { searchParams: Sear
   const { data, count, error } = await supabase
     .from('tenders_staging')
     .select(
-      // alias the mixed-case column so TS stays simple
-      'id,title_ai,description_long:"Description_long",publication_date,deadline_date,link',
+      [
+        'id',
+        'title_ai',
+        'summary_ai',
+        'description_long:"Description_long"',
+        'publication_date',
+        'deadline_date',
+        'call_status',
+        'issuing_authority',
+        'funding_institution',
+        'call_url',
+        'source_link',
+        'link',
+        'bullets_ai',
+        'application_tips',
+        'red_flags',
+        'keywords_ai',
+      ].join(','),
       { count: 'exact' }
     )
     .order('publication_date', { ascending: false })
@@ -52,13 +77,34 @@ export default async function TendersPage({ searchParams }: { searchParams: Sear
     );
   }
 
+  const splitLines = (value?: string | null) =>
+    (value ?? '')
+      .split(/\r?\n+/)
+      .map((entry) => entry.replace(/^[\s•\-\u2022]+/, '').trim())
+      .filter(Boolean);
+
+  const splitDelimited = (value?: string | null) =>
+    (value ?? '')
+      .split(/[,;\n]+/)
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+
   const tenders: Tender[] = (data ?? []).map((r: any) => ({
     id: r.id,
-    title_ai: r.title_ai ?? null,
-    description_long: r.description_long ?? null,
-    publication_date: r.publication_date ?? null,
-    deadline_date: r.deadline_date ?? null,
-    link: r.link ?? null,
+    title: r.title_ai?.trim() ?? null,
+    summary: r.summary_ai?.trim() ?? null,
+    description: r.description_long?.trim() ?? null,
+    publicationDate: r.publication_date ?? null,
+    deadlineDate: r.deadline_date ?? null,
+    callStatus: r.call_status?.trim() ?? null,
+    issuingAuthority: r.issuing_authority?.trim() ?? null,
+    fundingInstitution: r.funding_institution?.trim() ?? null,
+    callUrl: r.call_url?.trim() ?? r.link?.trim() ?? null,
+    sourceLink: r.source_link?.trim() ?? null,
+    bullets: splitLines(r.bullets_ai),
+    applicationTips: splitLines(r.application_tips),
+    redFlags: splitLines(r.red_flags),
+    keywords: splitDelimited(r.keywords_ai).map((kw: string) => kw.replace(/^#/, '')),
   }));
 
   const total = count ?? 0;
