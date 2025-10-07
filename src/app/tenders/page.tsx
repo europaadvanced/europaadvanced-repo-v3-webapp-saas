@@ -1,5 +1,5 @@
-export const revalidate = 0; // no caching
-export const dynamic = 'force-dynamic'; // always SSR
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
@@ -14,44 +14,53 @@ type Tender = {
   link: string | null;
 };
 
-// Next 15: searchParams is a Promise
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-export default async function TendersPage(
-  { searchParams }: { searchParams: SearchParams }
-) {
+export default async function TendersPage({ searchParams }: { searchParams: SearchParams }) {
   const supabase = await createSupabaseServerClient();
 
-  // Auth guard
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
   const sp = await searchParams;
-
-  const getOne = (v?: string | string[]) => (Array.isArray(v) ? v[0] : v);
+  const one = (v?: string | string[]) => (Array.isArray(v) ? v[0] : v);
 
   const perPage = 30;
-  const pageRaw = getOne(sp?.page) ?? '1';
+  const pageRaw = one(sp?.page) ?? '1';
   const pageNum = Number.parseInt(pageRaw, 10);
   const currentPage = Number.isFinite(pageNum) && pageNum > 0 ? pageNum : 1;
 
   const from = (currentPage - 1) * perPage;
   const to = from + perPage - 1;
 
-const { data, count, error } = await supabase
-  .from('tenders_staging')
-  .select(
-    'id,title_ai,description_long:"Description_long",publication_date,deadline_date,link',
-    { count: 'exact' }
-  )
-  .order('publication_date', { ascending: false })
-  .range(from, to);
+  const { data, count, error } = await supabase
+    .from('tenders_staging')
+    .select(
+      // alias the mixed-case column so TS stays simple
+      'id,title_ai,description_long:"Description_long",publication_date,deadline_date,link',
+      { count: 'exact' }
+    )
+    .order('publication_date', { ascending: false })
+    .range(from, to);
 
   if (error) {
-    return <p className="text-red-500">{error.message}</p>;
+    // keep page alive; show inline error but do not blank the whole UI
+    return (
+      <div className="p-6">
+        <div className="text-red-600 text-sm font-medium">{error.message}</div>
+      </div>
+    );
   }
 
-  const tenders = (data as Tender[]) ?? [];
+  const tenders: Tender[] = (data ?? []).map((r: any) => ({
+    id: r.id,
+    title_ai: r.title_ai ?? null,
+    description_long: r.description_long ?? null,
+    publication_date: r.publication_date ?? null,
+    deadline_date: r.deadline_date ?? null,
+    link: r.link ?? null,
+  }));
+
   const total = count ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
 
