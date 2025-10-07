@@ -38,14 +38,14 @@ export default async function TendersPage(
   const from = (currentPage - 1) * perPage;
   const to = from + perPage - 1;
 
-  const { data, count, error } = await supabase
-    .from('tenders_staging')
-    .select(
-      'id,title_ai,description_long,publication_date,deadline_date,link',
-      { count: 'exact' }
-    )
-    .order('publication_date', { ascending: false })
-    .range(from, to);
+const { data, count, error } = await supabase
+  .from('tenders_staging')
+  .select(
+    'id,title_ai,description_long:"Description_long",publication_date,deadline_date,link',
+    { count: 'exact' }
+  )
+  .order('publication_date', { ascending: false })
+  .range(from, to);
 
   if (error) {
     return <p className="text-red-500">{error.message}</p>;
