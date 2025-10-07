@@ -176,7 +176,7 @@ export interface Database {
         Row: {
           avatar_url?: string | null;
           billing_address?: Json | null;
-             full_name?: string | null;
+                      full_name?: string | null;
           id: string;
           phone?: string | null;
           payment_method?: Json | null;
@@ -201,30 +201,60 @@ export interface Database {
       };
       tenders_staging: {
         Row: {
+          application_tips: string | null;
+          bullets_ai: string | null;
+          call_status: string | null;
+          call_url: string | null;
           created_at: string;
           deadline_date: string | null;
           description_long: string | null;
+          funding_institution: string | null;
           id: string;
           link: string | null;
+          issuing_authority: string | null;
+          keywords_ai: string | null;
           publication_date: string | null;
+          red_flags: string | null;
+          source_link: string | null;
+          summary_ai: string | null;
           title_ai: string | null;
         };
         Insert: {
+          application_tips?: string | null;
+          bullets_ai?: string | null;
+          call_status?: string | null;
+          call_url?: string | null;
           created_at?: string;
           deadline_date?: string | null;
           description_long?: string | null;
+          funding_institution?: string | null;
           id?: string;
           link?: string | null;
+          issuing_authority?: string | null;
+          keywords_ai?: string | null;
           publication_date?: string | null;
+          red_flags?: string | null;
+          source_link?: string | null;
+          summary_ai?: string | null;
           title_ai?: string | null;
         };
         Update: {
+          application_tips?: string | null;
+          bullets_ai?: string | null;
+          call_status?: string | null;
+          call_url?: string | null;
           created_at?: string;
           deadline_date?: string | null;
           description_long?: string | null;
+          funding_institution?: string | null;
           id?: string;
           link?: string | null;
+          issuing_authority?: string | null;
+          keywords_ai?: string | null;
           publication_date?: string | null;
+          red_flags?: string | null;
+          source_link?: string | null;
+          summary_ai?: string | null;
           title_ai?: string | null;
         };
         Relationships: [];
