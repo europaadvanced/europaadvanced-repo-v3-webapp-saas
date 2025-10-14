@@ -1,4 +1,5 @@
 <AuthGuardRedirect />
+import AuthGuardRedirect from '@/components/auth/AuthGuardRedirect';
 
 import { AuthUI } from "../auth-ui";
 import { signInWithPassword, signUpWithPassword } from "../auth-actions";
