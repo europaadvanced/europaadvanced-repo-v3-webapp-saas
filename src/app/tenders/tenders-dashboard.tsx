@@ -2,15 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-
-type Tender = {
-  id: string;
-  title_ai: string | null;
-  description_long: string | null;
-  publication_date: string | null;
-  deadline_date: string | null;
-  link: string | null;
-};
+import type { Tender } from '@/types/tenders';
 
 export default function TendersDashboard(props: {
   tenders: Tender[];
@@ -33,11 +25,11 @@ export default function TendersDashboard(props: {
   const fmt = (d?: string | null) => (d ? new Date(d).toLocaleDateString() : '—');
 
   return (
-    <div className="ga-tenders min-h-screen bg-white text-neutral-900">
+    <div className="min-h-screen bg-white text-neutral-900">
       <div className="mx-auto max-w-6xl px-6 py-8">
-        <h1 className="text-2xl font-semibold">Iskanje razpisov</h1>
+        <h1 className="text-2xl font-semibold">Tenders</h1>
         <p className="mt-1 text-sm text-neutral-600">
-          Najdenih razpisov: <strong>{totalTenders}</strong>
+          Found: <strong>{totalTenders}</strong>
         </p>
       </div>
 
@@ -62,7 +54,7 @@ export default function TendersDashboard(props: {
                     target="_blank"
                     className="text-sm underline underline-offset-2"
                   >
-                    Odpri razpis →
+                    Open call →
                   </Link>
                 )}
               </div>
@@ -73,10 +65,10 @@ export default function TendersDashboard(props: {
 
               <div className="mt-3 flex flex-wrap gap-3 text-xs text-neutral-600">
                 <span className="rounded-full border px-2 py-1">
-                  Objavljeno: {fmt(t.publication_date)}
+                  Published: {fmt(t.publication_date)}
                 </span>
                 <span className="rounded-full border px-2 py-1">
-                  Rok: {fmt(t.deadline_date)}
+                  Deadline: {fmt(t.deadline_date)}
                 </span>
               </div>
             </article>
