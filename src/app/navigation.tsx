@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { IoMenu } from "react-icons/io5";
 
 import { AccountMenu } from "@/components/account-menu";
@@ -7,6 +6,21 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTrigger } from
 import { getSession } from "@/features/account/controllers/get-session";
 
 import { signOut } from "./(auth)/auth-actions";
+import { NavigationLinks } from "./navigation-links";
+
+const signedInLinks = [
+  { href: "/app", label: "App" },
+  { href: "/tenders", label: "Tenders" },
+  { href: "/tenders-ga", label: "Javni razpisi" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/account", label: "Account" },
+];
+
+const signedOutLinks = [
+  { href: "/pricing", label: "Pricing" },
+  { href: "/login", label: "Login" },
+  { href: "/signup", label: "Register" },
+];
 
 export async function Navigation() {
   const session = await getSession();
@@ -16,12 +30,11 @@ export async function Navigation() {
       {session ? (
         <>
           {/* desktop links when signed in */}
-          <nav className="hidden items-center gap-4 lg:flex">
-            <Link href="/app">App</Link>
-            <Link href="/tenders">Tenders</Link>
-            <Link href="/pricing">Pricing</Link>
-            <Link href="/account">Account</Link>
-          </nav>
+          <NavigationLinks
+            links={signedInLinks}
+            className="hidden gap-4 lg:flex lg:items-center"
+            linkClassName="text-sm"
+          />
 
           <AccountMenu signOut={signOut} />
 
@@ -34,12 +47,11 @@ export async function Navigation() {
               <SheetHeader>
                 <Logo />
                 <SheetDescription className="py-8">
-                  <div className="grid gap-4 text-lg">
-                    <Link href="/app">App</Link>
-                    <Link href="/tenders">Tenders</Link>
-                    <Link href="/pricing">Pricing</Link>
-                    <Link href="/account">Account</Link>
-                  </div>
+                  <NavigationLinks
+                    links={signedInLinks}
+                    className="grid gap-4"
+                    linkClassName="text-lg"
+                  />
                 </SheetDescription>
               </SheetHeader>
             </SheetContent>
@@ -48,11 +60,11 @@ export async function Navigation() {
       ) : (
         <>
           {/* desktop links when signed out */}
-          <nav className="hidden items-center gap-4 lg:flex">
-            <Link href="/pricing">Pricing</Link>
-            <Link href="/login">Login</Link>
-            <Link href="/signup">Register</Link>
-          </nav>
+          <NavigationLinks
+            links={signedOutLinks}
+            className="hidden gap-4 lg:flex lg:items-center"
+            linkClassName="text-sm"
+          />
 
           {/* mobile menu when signed out */}
           <Sheet>
@@ -63,11 +75,11 @@ export async function Navigation() {
               <SheetHeader>
                 <Logo />
                 <SheetDescription className="py-8">
-                  <div className="grid gap-4 text-lg">
-                    <Link href="/pricing">Pricing</Link>
-                    <Link href="/login">Login</Link>
-                    <Link href="/signup">Register</Link>
-                  </div>
+                  <NavigationLinks
+                    links={signedOutLinks}
+                    className="grid gap-4"
+                    linkClassName="text-lg"
+                  />
                 </SheetDescription>
               </SheetHeader>
             </SheetContent>
