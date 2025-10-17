@@ -1,15 +1,17 @@
-import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
+import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
-export async function getCustomerId({ userId }: { userId: string }) {
-  const { data, error } = await supabaseAdminClient
-    .from('customers')
+type Row = { stripe_customer_id: string | null };
+
+export async function getCustomerId(userId: string) {
+  const supabase = await createSupabaseServerClient();
+
+  // adjust table/column names if your table isn't "profiles" or PK isn't "id"
+  const { data, error } = await supabase
+    .from<Row>('profiles')
     .select('stripe_customer_id')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
-  if (error) {
-    throw new Error('Error fetching stripe_customer_id');
-  }
-
-  return data.stripe_customer_id;
+  if (error) throw error;
+  return data?.stripe_customer_id ?? null;
 }
