@@ -5,9 +5,8 @@ type Row = { stripe_customer_id: string | null };
 export async function getCustomerId(userId: string) {
   const supabase = await createSupabaseServerClient();
 
-  // adjust table/column names if your table isn't "profiles" or PK isn't "id"
   const { data, error } = await supabase
-    .from<Row>('profiles')
+    .from<Row>('profiles') // change table name here if yours differs
     .select('stripe_customer_id')
     .eq('id', userId)
     .maybeSingle();
