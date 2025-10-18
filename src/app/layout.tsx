@@ -1,3 +1,12 @@
+<nav aria-label="Main" className="border-b">
+  <div className="mx-auto max-w-6xl px-4 py-2 flex items-center gap-4">
+    {/* keep your existing links if any */}
+    <Link href="/tenders-ga" className="text-sm hover:underline">
+      Javni razpisi
+    </Link>
+  </div>
+</nav>
+
 import { PropsWithChildren } from "react";
 import Link from 'next/link'
 import type { Metadata } from "next";
