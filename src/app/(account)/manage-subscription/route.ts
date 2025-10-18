@@ -16,10 +16,7 @@ export async function GET() {
   }
 
   // 2. Retrieve or create the customer in Stripe
-  const customer = await getCustomerId({
-    userId: session.user.id,
-  });
-
+const customerId = await getCustomerId(session.user.id);
   if (!customer) {
     throw Error('Could not get customer');
   }
