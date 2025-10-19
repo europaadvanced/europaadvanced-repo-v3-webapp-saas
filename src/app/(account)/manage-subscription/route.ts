@@ -1,3 +1,4 @@
+// src/app/(account)/manage-subscription/route.ts
 import { redirect } from 'next/navigation';
 
 import { getCustomerId } from '@/features/account/controllers/get-customer-id';
@@ -8,22 +9,14 @@ import { getURL } from '@/utils/get-url';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  // 1. Get the user from session
   const session = await getSession();
+  if (!session?.user?.id) throw Error('Could not get userId');
 
-  if (!session || !session.user.id) {
-    throw Error('Could not get userId');
-  }
+  const customerId = await getCustomerId(session.user.id);
+  if (!customerId) throw Error('Could not get customer');
 
-  // 2. Retrieve or create the customer in Stripe
-const customerId = await getCustomerId(session.user.id);
-  if (!customer) {
-    throw Error('Could not get customer');
-  }
-
-  // 3. Create portal link and redirect user
   const { url } = await stripeAdmin.billingPortal.sessions.create({
-    customer,
+    customer: customerId,
     return_url: `${getURL()}/account`,
   });
 
